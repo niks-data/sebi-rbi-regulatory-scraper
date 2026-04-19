@@ -1,0 +1,6 @@
+playwright
+lxml
+pandas
+streamlit
+apscheduler
+requests
