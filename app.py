@@ -7,8 +7,8 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'scrapers'))
 
-from sebi_scraper import scrape_sebi_orders
-from rbi_scraper import scrape_rbi_notifications
+from sebi_scraper_lite import scrape_sebi_orders_lite
+from rbi_scraper_lite import scrape_rbi_notifications_lite
 
 def run_in_thread(func, config):
     container = []
