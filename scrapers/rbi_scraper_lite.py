@@ -1,46 +1,58 @@
-import pandas as pd
-import streamlit as st
+import requests
 import os
-import sys
+from datetime import datetime
+from lxml import html
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'scrapers'))
+OUTPUT_DIR = os.path.join(os.path.dirname(__file__), '..', 'output')
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-from sebi_scraper_lite import scrape_sebi_orders_lite
-from rbi_scraper_lite import scrape_rbi_notifications_lite
+BASE_URL = "https://www.rbi.org.in/Scripts/"
+LIST_URL = "https://www.rbi.org.in/Scripts/NotificationUser.aspx"
 
-st.set_page_config(page_title="SEBI / RBI Regulatory Scraper", layout="wide")
-st.title("🏛️ SEBI / RBI Regulatory Scraper")
-st.caption("Scrapes enforcement orders and notifications from SEBI and RBI official portals.")
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36"
+}
 
-tab1, tab2 = st.tabs(["SEBI Orders", "RBI Notifications"])
+def scrape_rbi_notifications_lite(max_pages=1):
+    results = []
+    current_date = ""
 
-with tab1:
-    st.subheader("SEBI Enforcement Orders")
-    max_pages_sebi = st.slider("Max pages to scrape", 1, 20, 3, key="sebi_pages")
+    print(f"[RBI] Scraping notifications...")
+    try:
+        response = requests.get(LIST_URL, headers=HEADERS, timeout=30)
+        tree = html.fromstring(response.content)
+        rows = tree.xpath("//table//tr[td]")
+        print(f"[RBI] Found {len(rows)} rows")
 
-    if st.button("Run SEBI Scraper"):
-        with st.spinner("Scraping SEBI orders..."):
-            results = scrape_sebi_orders_lite(max_pages_sebi)
-        if results:
-            df = pd.DataFrame(results)
-            st.success(f"✅ {len(results)} records scraped")
-            st.dataframe(df, use_container_width=True)
-            csv = df.to_csv(index=False).encode("utf-8")
-            st.download_button("⬇️ Download CSV", csv, "sebi_orders.csv", "text/csv")
-        else:
-            st.error("No results found.")
+        for row in rows:
+            cols = row.xpath(".//td")
+            links = row.xpath(".//a/@href")
 
-with tab2:
-    st.subheader("RBI Notifications")
+            if len(cols) == 1 and len(links) == 0:
+                current_date = cols[0].text_content().strip()
+                continue
 
-    if st.button("Run RBI Scraper"):
-        with st.spinner("Scraping RBI notifications..."):
-            results = scrape_rbi_notifications_lite()
-        if results:
-            df = pd.DataFrame(results)
-            st.success(f"✅ {len(results)} records scraped")
-            st.dataframe(df, use_container_width=True)
-            csv = df.to_csv(index=False).encode("utf-8")
-            st.download_button("⬇️ Download CSV", csv, "rbi_notifications.csv", "text/csv")
-        else:
-            st.error("No results found.")
+            if len(cols) == 2 and len(links) >= 1:
+                title = cols[0].text_content().strip()
+                size = cols[1].text_content().strip()
+                detail_link = links[0]
+                detail_url = BASE_URL + detail_link if not detail_link.startswith("http") else detail_link
+                pdf_url = links[1] if len(links) >= 2 else ""
+
+                results.append({
+                    "date": current_date,
+                    "title": title,
+                    "size": size,
+                    "detail_url": detail_url,
+                    "pdf_url": pdf_url,
+                    "scraped_at": datetime.now().isoformat()
+                })
+
+    except Exception as e:
+        print(f"[RBI] Error: {e}")
+
+    return results
+
+if __name__ == "__main__":
+    results = scrape_rbi_notifications_lite()
+    print(f"Total: {len(results)}")
