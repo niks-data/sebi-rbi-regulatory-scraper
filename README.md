@@ -32,7 +32,7 @@ sebi-rbi-regulatory-scraper/
 | 2024-02-03 | ABC Brokers | Disclosure violation | 5,00,000 |
 
 ## Live demo
-🔗 Coming soon (Streamlit)
+🔗 [Live Demo](https://sebi-rbi-scraper.streamlit.app)
 
 ## Use cases
 - Compliance monitoring for law firms and financial analysts
