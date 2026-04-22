@@ -16,6 +16,7 @@ tab1, tab2 = st.tabs(["SEBI Orders", "RBI Notifications"])
 
 with tab1:
     st.subheader("SEBI Enforcement Orders")
+    st.info("💡 This demo extracts order metadata and detail URLs. Full PDF extraction available in the complete Playwright version.")
     max_pages_sebi = st.number_input("Number of pages to scrape (25 records per page)", min_value=1, max_value=476, value=3, step=1, key="sebi_pages")
 
     if st.button("Run SEBI Scraper"):
@@ -32,6 +33,7 @@ with tab1:
 
 with tab2:
     st.subheader("RBI Notifications")
+    st.info("💡 This demo extracts the latest RBI notifications including direct PDF download links.")
     max_pages_rbi = st.number_input("Number of pages to scrape (latest notifications per page)", min_value=1, max_value=50, value=1, step=1, key="rbi_pages")
 
     if st.button("Run RBI Scraper"):
